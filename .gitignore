@@ -4,3 +4,4 @@ tmdb_5000_movies.csv
 myenv
 .env
 __pycache__
+*.faiss

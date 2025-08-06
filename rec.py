@@ -1,19 +1,42 @@
-# recommender_engine.py
-
+import faiss
 import pickle
 import pandas as pd
 
-# Load the pickled data once
-similarity = pickle.load(open('similarity.pkl', 'rb'))
-movie_list = pickle.load(open('movies.pkl', 'rb'))
-movies = pd.DataFrame(movie_list)
+# Load everything
+index = faiss.read_index("movie_index.faiss")
 
-def recommend(movie):
-    movie_i = movies[movies['title'] == movie].index[0]
-    distances = similarity[movie_i]
-    movie_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+with open("vectorizer.pkl", "rb") as f:
+    vectorizer = pickle.load(f)
 
-    rec_movies = []
-    for i in movie_list:
-        rec_movies.append(movies.title.iloc[i[0]])
-    return rec_movies
+train_df = pd.read_csv("movies_df.csv")
+id_to_title = dict(enumerate(train_df['title']))
+
+# Recreate recommend function
+def recommend(movie_title, top_n=5):
+    movie_idx = title_to_id.get(movie_title)
+    if movie_idx is None:
+        print("Movie not found!")
+        return
+
+    # Query FAISS
+    D, I = index.search(vectors[movie_idx].reshape(1, -1), top_n + 1)
+
+    # Skip the first match (it will be the same movie), and collect details
+    results = []
+    for i in I[0][1:]:  # Skipping the first index
+        row = train_df.iloc[i]
+        results.append({
+            'title': row['title'],
+            'overview': row['overview'],
+            'release_date': row['release_date'],
+            'vote_average': row['vote_average']
+        })
+
+    return results
+
+
+recommendations = recommend("Deadpool 2")
+for rec in recommendations:
+    print(rec)
+    print("-" * 50)
+
