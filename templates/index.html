@@ -1,0 +1,46 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Recommender</title>
+</head>
+<body>
+    <h2>Movie Recommendation System</h2>
+
+    <form id="recForm">
+        <label for="title">Select a movie:</label>
+        <select id="title" name="title">
+            {% for t in titles %}
+                <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Get Recommendations</button>
+    </form>
+
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('recForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const res = await fetch(`/recommend?title=${encodeURIComponent(title)}`);
+            const data = await res.json();
+
+            let resultHTML = '<h3>Recommendations:</h3>';
+            for (let movie of data.recommendations) {
+                resultHTML += `
+                    <div style="margin-bottom:15px;">
+                        <strong>${movie.title}</strong><br/>
+                        <em>${movie.release_date}</em> | IMDb: ${movie.imdb_rating}<br/>
+                        <p>${movie.overview}</p>
+                        <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" />
+                        <hr/>
+                    </div>
+                `;
+            }
+            document.getElementById('results').innerHTML = resultHTML;
+        });
+    </script>
+</body>
+</html>
